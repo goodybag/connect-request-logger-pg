@@ -12,11 +12,16 @@
     "moment": "2.2.x",
     "node-uuid": "1.4.x"
   },
-  "devDependencies": {},
-  "scripts": {
-    "test": "mocha test"
+  "devDependencies": {
+    "mocha": "1.12.x"
   },
-  "repository": "",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --bail"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/goodybag/connect-request-logger-pg"
+  },
   "author": "Lalit Kapoor",
   "license": "MIT"
 }
