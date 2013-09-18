@@ -11,61 +11,68 @@ var DB = require('./db');
  * @param  {Object} options
  *         - {String} connStr: postgres connection string
  *         - {String} table: table name
- *         - {Object} definition (optional): additional columns to add to the table
  *         - {String} plan (optional): year, month, week, day (default: month)
- *         - {Object} valueMap (optional): map column name to key on req object to get the values (use array for nested properites)
- *           - 'uuid': 'uuid'
- *           - 'uuid': ['body', 'uuid']
+ *         - {Object} customFields (optional) get values from req object (use array for nested properites)
+ *           - {'uuid': 'uuid'}
+ *           - {'uuid': ['body', 'uuid']}
  */
 module.exports = function (options) {
   // handle required option parameters
   if (!options.connStr) throw Error('connStr is required!');
   if (!options.table) throw Error('table is required!');
-  if (options.definition ? !options.valueMap : options.valueMap) throw Error('must include both definition and valueMap or none of them');
 
   var defaults = {
     plan: 'month'
-  , definition: {
-      id: {
-        type: 'serial'
-      , primaryKey: true
-      }
-    , method: {
-        type: 'text'
-      }
-    , url: {
-        type: 'text'
-      }
-    , query: {
-        type: 'json'
-      }
-    , userAgent: {
-        type: 'text'
-      }
-    , createdAt: {
-        type: 'timestamptz'
-      , default: 'now()'
-      }
+  };
+
+  var definition = {
+    id: {
+      type: 'serial'
+    , primaryKey: true
+    }
+  , method: {
+      type: 'text'
+    }
+  , url: {
+      type: 'text'
+    }
+  , query: {
+      type: 'json'
+    }
+  , userAgent: {
+      type: 'text'
+    }
+  , data: {
+      type: 'json'
+    }
+  , createdAt: {
+      type: 'timestamptz'
+    , default: 'now()'
     }
   };
 
   // override any defaults
-  options.plan = options.plan || defaults.plan
-  options.definition = _.extend(defaults.definition, options.definition);
+  options.plan = options.plan || defaults.plan;
 
   var db = DB(options.connStr);
 
   var tasks = [
     // get automated partitioning function from disk
     function (callback) {
-      fs.readFile(__dirname+'/sql/partition-function.sql.tmpl', function(error, data) {
+      fs.readFile(__dirname+'/sql/partition-function.sql.tmpl', function(error, template) {
         if (error) console.error("could not load partitioning function sql from disk");
-        callback(error, data.toString().replace("{{PARENT_TABLE_NAME_HERE}}", options.table));
+
+        // replace values in template
+        var sql = template.toString()
+          .replace("{{PARENT_TABLE_NAME}}", options.table)
+          .replace("{{PLAN}}", options.plan)
+        ;
+        callback(error, sql);
       });
     }
     // load partitioning function into database
-  , function (data, callback) {
-      db.query(data, function(error) {
+  , function (sql, callback) {
+      db.query(sql, function(error) {
         if (error) console.error("could not loading partitioning function");
         callback(error);
       });
@@ -76,7 +83,7 @@ module.exports = function (options) {
         type: 'create-table'
       , table: options.table
       , ifNotExists: true
-      , definition: options.definition
+      , definition: definition
       });
 
       db.query(sql.query, sql.values, function(error) {
@@ -113,12 +120,13 @@ module.exports = function (options) {
     , userAgent:headers['user-agent']
     }
 
-    if (options.valueMap) {
-      _.each(options.valueMap, function(value, key) {
+    if (options.customFields) {
+      values.data = {};
+      _.each(options.customFields, function(value, key) {
         if (Array.isArray(value)) {
-          value[key] = _.reduce(value, function(current, x) {return (current||0)[x];}, req);
+          value.data[key] = _.reduce(value, function(current, x) {return (current||0)[x];}, req);
         } else {
-          values[key] = req[value];
+          values.data[key] = req[value];
         }
       });
     }

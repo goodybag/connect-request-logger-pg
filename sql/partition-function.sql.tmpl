@@ -9,7 +9,7 @@ declare
   end_date date;
   planInterval interval;
 begin
-  plan := 'month';
+  plan := '{{PLAN}}';
   created_at := NEW."createdAt";
   start_date := date_trunc(plan,created_at);
   planInterval := ('1 '||plan)::interval;
@@ -20,7 +20,7 @@ begin
   if not exists(select * from information_schema.tables where table_name = tname) then
     execute 'CREATE TABLE IF NOT EXISTS '||tname||' (
               CHECK ("createdAt" >= '''||start_date||''' AND "createdAt" < '''||end_date||''')
-            ) INHERITS ({{PARENT_TABLE_NAME_HERE}})';
+            ) INHERITS ({{PARENT_TABLE_NAME}})';
     execute 'CREATE INDEX created_at_idx ON '||tname||' ("createdAt")';
   end if;
 

@@ -1,11 +1,18 @@
+var uuid = require('node-uuid');
 var express = require('express');
 var requestLogger = require('./');
 
 var app = express();
 
+app.use(function(req, res, next) {
+  req.uuid = uuid.v1();
+  next();
+});
+
 app.use(requestLogger({
   table: 'requests'
 , connStr: 'postgres://localhost:5432/test'
+, customFields: {uuid: 'uuid'}
 }));
 
 app.get('/hello', function(req, res){
