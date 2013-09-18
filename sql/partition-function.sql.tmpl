@@ -1,0 +1,44 @@
+-- request trigger function
+create or replace function http_requests_insert_trigger()
+returns trigger as $$
+declare
+  plan text;
+  created_at date;
+  tname text;
+  start_date date;
+  end_date date;
+  planInterval interval;
+begin
+  plan := 'month';
+  created_at := NEW."createdAt";
+  start_date := date_trunc(plan,created_at);
+  planInterval := ('1 '||plan)::interval;
+  end_date := (date_trunc(plan,(start_date + planInterval)));
+
+  tname := 'requests_' || to_char(created_at::timestamp, 'YYYYMM')::text;
+
+  if not exists(select * from information_schema.tables where table_name = tname) then
+    execute 'CREATE TABLE IF NOT EXISTS '||tname||' (
+              CHECK ("createdAt" >= '''||start_date||''' AND "createdAt" < '''||end_date||''')
+            ) INHERITS ({{PARENT_TABLE_NAME_HERE}})';
+    execute 'CREATE INDEX created_at_idx ON '||tname||' ("createdAt")';
+  end if;
+
+  execute 'insert into ' || tname || ' values ($1.*)'
+  using NEW;
+
+  return null;
+end;
+$$
+language plpgsql;
+
+create or replace function create_insert_http_requests_trigger(tname text) RETURNS integer AS
+$$
+begin
+  IF NOT EXISTS(SELECT *  FROM information_schema.triggers  WHERE event_object_table = tname  AND trigger_name = 'insert_http_requests_trigger') THEN
+    execute 'create trigger insert_http_requests_trigger before insert on '||tname||' for each row execute procedure http_requests_insert_trigger();';
+  END IF;
+RETURN NULL;
+end;
+$$
+language plpgsql;
