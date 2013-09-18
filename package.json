@@ -1,7 +1,7 @@
 {
-  "name": "express-request-logger-pg",
+  "name": "connect-request-logger-pg",
   "version": "0.0.1",
-  "description": "log http requests to database",
+  "description": "log http requests to postgres",
   "main": "index.js",
   "dependencies": {
     "express": "3.4.x",
