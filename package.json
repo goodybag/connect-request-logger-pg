@@ -20,8 +20,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/goodybag/connect-request-logger-pg"
+    "url": "git://github.com/goodybag/connect-request-logger-pg.git"
   },
+  "keywords": [
+    "http",
+    "express",
+    "connect",
+    "postgres",
+    "logging",
+    "logger",
+    "requests",
+    "middleware"
+ ],
   "author": "Lalit Kapoor",
   "license": "MIT"
 }
