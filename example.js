@@ -10,8 +10,9 @@ app.use(function(req, res, next) {
 });
 
 app.use(requestLogger({
-  table: 'requests'
-, connStr: 'postgres://localhost:5432/test'
+  connStr: 'postgres://localhost:5432/test'
+, table: 'requests'
+, plan: 'month'
 , customFields: {uuid: 'uuid'}
 }));
 
