@@ -15,7 +15,16 @@ begin
   planInterval := ('1 '||plan)::interval;
   end_date := (date_trunc(plan,(start_date + planInterval)));
 
-  tname := 'requests_' || to_char(created_at::timestamp, 'YYYYMM')::text;
+  -- manage plan, default to plan
+  if plan = 'year' THEN
+    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY')::text;
+  elsif plan = 'week' THEN
+    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_WW')::text;
+  elsif plan = 'day' THEN
+    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_MM_DD')::text;
+  else
+    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_MM')::text;
+  end if;
 
   if not exists(select * from information_schema.tables where table_name = tname) then
     execute 'CREATE TABLE IF NOT EXISTS '||tname||' (
