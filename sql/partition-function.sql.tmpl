@@ -19,7 +19,7 @@ begin
   if plan = 'year' THEN
     tname := 'requests_' || to_char(created_at::timestamp, 'YYYY')::text;
   elsif plan = 'week' THEN
-    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_WW')::text;
+    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_"week"_WW')::text;
   elsif plan = 'day' THEN
     tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_MM_DD')::text;
   else
@@ -30,7 +30,7 @@ begin
     execute 'CREATE TABLE IF NOT EXISTS '||tname||' (
               CHECK ("createdAt" >= '''||start_date||''' AND "createdAt" < '''||end_date||''')
             ) INHERITS ({{PARENT_TABLE_NAME}})';
-    execute 'CREATE INDEX created_at_idx ON '||tname||' ("createdAt")';
+    execute 'CREATE INDEX idx_'||tname||'_created_at ON '||tname||' ("createdAt")';
   end if;
 
   execute 'insert into ' || tname || ' values ($1.*)'
