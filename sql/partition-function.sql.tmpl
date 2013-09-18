@@ -15,7 +15,7 @@ begin
   planInterval := ('1 '||plan)::interval;
   end_date := (date_trunc(plan,(start_date + planInterval)));
 
-  -- manage plan, default to plan
+  -- manage plan, default plan is month
   if plan = 'year' THEN
     tname := 'requests_' || to_char(created_at::timestamp, 'YYYY')::text;
   elsif plan = 'week' THEN
