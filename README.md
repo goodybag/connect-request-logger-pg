@@ -4,7 +4,7 @@ Log http request to postgres.
 - Automatically does table partitioning by year/month/week/day (default: month)
 - Stores user defined fields (looks at properties attached to the req object, supports nested properties as well)
   - e.g. `{uuid: 'uuid'}`
-  - e.g. `{foo: ['query', 'bar']}`
+  - e.g. `{foo: ['query', 'foo']}`
 
 
 ### Example
