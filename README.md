@@ -1,3 +1,5 @@
+## Connect Request Logger for PostgreSQL
+
 Log http request to postgres.
 - Automatically does table partitioning by month
 - Can store user selected values by extending definition and adding map like so {key: keyNameOnReqObject}
