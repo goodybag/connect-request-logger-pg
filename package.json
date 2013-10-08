@@ -1,6 +1,6 @@
 {
   "name": "connect-request-logger-pg",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "log http requests to postgres",
   "main": "index.js",
   "dependencies": {
