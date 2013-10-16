@@ -64,8 +64,8 @@ module.exports = function (options) {
 
         // replace values in template
         var sql = template.toString()
-          .replace("{{PARENT_TABLE_NAME}}", options.table)
-          .replace("{{PLAN}}", options.plan)
+          .replace(/\{\{PARENT_TABLE_NAME\}\}/g, options.table)
+          .replace(/\{\{PLAN\}\}/g, options.plan)
         ;
         callback(error, sql);
       });
