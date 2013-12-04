@@ -1,3 +1,5 @@
+SELECT pg_advisory_lock(1);
+
 -- request trigger function
 create or replace function http_requests_insert_trigger()
 returns trigger as $$
@@ -9,6 +11,7 @@ declare
   end_date date;
   planInterval interval;
 begin
+  PERFORM pg_advisory_lock(1);
   plan := '{{PLAN}}';
   created_at := NEW."createdAt";
   start_date := date_trunc(plan,created_at);
@@ -17,13 +20,13 @@ begin
 
   -- manage plan, default plan is month
   if plan = 'year' THEN
-    tname := '{{PARENT_TABLE_NAME}}_' || to_char(created_at::timestamp, 'YYYY')::text;
+    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY')::text;
   elsif plan = 'week' THEN
-    tname := '{{PARENT_TABLE_NAME}}_' || to_char(created_at::timestamp, 'YYYY_"week"_WW')::text;
+    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_"week"_WW')::text;
   elsif plan = 'day' THEN
-    tname := '{{PARENT_TABLE_NAME}}_' || to_char(created_at::timestamp, 'YYYY_MM_DD')::text;
+    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_MM_DD')::text;
   else
-    tname := '{{PARENT_TABLE_NAME}}_' || to_char(created_at::timestamp, 'YYYY_MM')::text;
+    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_MM')::text;
   end if;
 
   if not exists(select * from information_schema.tables where table_name = tname) then
@@ -37,6 +40,7 @@ begin
   using NEW;
 
   return null;
+  PERFORM pg_advisory_unlock(1);
 end;
 $$
 language plpgsql;
@@ -44,10 +48,15 @@ language plpgsql;
 create or replace function create_insert_http_requests_trigger(tname text) RETURNS integer AS
 $$
 begin
+  PERFORM pg_advisory_lock(1);
   IF NOT EXISTS(SELECT *  FROM information_schema.triggers  WHERE event_object_table = tname  AND trigger_name = 'insert_http_requests_trigger') THEN
     execute 'create trigger insert_http_requests_trigger before insert on '||tname||' for each row execute procedure http_requests_insert_trigger();';
   END IF;
-RETURN NULL;
+
+  RETURN NULL;
+  PERFORM pg_advisory_unlock(1);
 end;
 $$
 language plpgsql;
+
+SELECT pg_advisory_unlock(1);
