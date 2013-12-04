@@ -56,55 +56,66 @@ module.exports = function (options) {
 
   var db = DB(options.connStr);
 
-  var tasks = [
-    // get automated partitioning function from disk
-    function (callback) {
-      fs.readFile(__dirname+'/sql/partition-function.sql.tmpl', function(error, template) {
-        if (error) console.error("could not load partitioning function sql from disk");
+  db.getClient(function (error, client, done) {
+    var tasks = [
+      // get automated partitioning function from disk
+      function (callback) {
+        fs.readFile(__dirname+'/sql/partition-function.sql.tmpl', function(error, template) {
+          if (error) console.error("could not load partitioning function sql from disk");
 
-        // replace values in template
-        var sql = template.toString()
-          .replace(/\{\{PARENT_TABLE_NAME\}\}/g, options.table)
-          .replace(/\{\{PLAN\}\}/g, options.plan)
-        ;
-        callback(error, sql);
-      });
-    }
-    // load partitioning function into database
-  , function (sql, callback) {
-      db.query(sql, function(error) {
-        if (error) console.error("could not loading partitioning function");
-        callback(error);
-      });
-    }
-    // create table if it doesn't exist
-  , function (callback) {
-      var sql = builder.sql({
-        type: 'create-table'
-      , table: options.table
-      , ifNotExists: true
-      , definition: definition
-      });
+          // replace values in template
+          var sql = template.toString()
+            .replace(/\{\{PARENT_TABLE_NAME\}\}/g, options.table)
+            .replace(/\{\{PLAN\}\}/g, options.plan)
+          ;
+          callback(error, sql);
+        });
+      }
+      // create advisory lock
+    , function (callback) {
+        client.query('SELECT pg_advisory_lock(1);');
+      }
+      // load partitioning function into database
+    , function (sql, callback) {
+        client.query(sql, function(error) {
+          if (error) console.error("could not loading partitioning function");
+          callback(error);
+        });
+      }
+      // create table if it doesn't exist
+    , function (callback) {
+        var sql = builder.sql({
+          type: 'create-table'
+        , table: options.table
+        , ifNotExists: true
+        , definition: definition
+        });
 
-      db.query(sql.query, sql.values, function(error) {
-        if (error) console.error('could not create table');
-        callback(error);
-      });
-    }
-    // update partitions
-  , function (callback) {
-      // assumes public schema
-      var sql = "SELECT create_insert_http_requests_trigger('"+options.table+"');";
+        client.query(sql.query, sql.values, function(error) {
+          if (error) console.error('could not create table');
+          callback(error);
+        });
+      }
+      // update partitions
+    , function (callback) {
+        // assumes public schema
+        var sql = "SELECT create_insert_http_requests_trigger('"+options.table+"');";
 
-      db.query(sql, function(error) {
-        if (error) console.error('could not update partition');
-        callback(error);
-      });
-    }
-  ];
+        client.query(sql, function(error) {
+          if (error) console.error('could not update partition');
+          callback(error);
+        });
+      }
+      // remove advisory lock
+    , function (callback) {
+        client.query('SELECT pg_advisory_unlock(1);');
+      }
+    ];
 
-  async.waterfall(tasks, function(error) {
-    if (error) throw error;
+    async.waterfall(tasks, function(error) {
+      done();
+      if (error) throw error;
+    });
   });
 
   // express middleware

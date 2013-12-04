@@ -23,6 +23,11 @@ module.exports = function (connStr) {
           if (callback) return callback(null, result);
         });
       });
+    },
+
+    getClient: function(callback) {
+      // callback will have arguments: error, client, done
+      pg.connect(connStr, callback);
     }
   };
 };
