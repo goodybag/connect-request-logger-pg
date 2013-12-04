@@ -20,13 +20,13 @@ begin
 
   -- manage plan, default plan is month
   if plan = 'year' THEN
-    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY')::text;
+    tname := '{{PARENT_TABLE_NAME}}_' || to_char(created_at::timestamp, 'YYYY')::text;
   elsif plan = 'week' THEN
-    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_"week"_WW')::text;
+    tname := '{{PARENT_TABLE_NAME}}_' || to_char(created_at::timestamp, 'YYYY_"week"_WW')::text;
   elsif plan = 'day' THEN
-    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_MM_DD')::text;
+    tname := '{{PARENT_TABLE_NAME}}_' || to_char(created_at::timestamp, 'YYYY_MM_DD')::text;
   else
-    tname := 'requests_' || to_char(created_at::timestamp, 'YYYY_MM')::text;
+    tname := '{{PARENT_TABLE_NAME}}_' || to_char(created_at::timestamp, 'YYYY_MM')::text;
   end if;
 
   if not exists(select * from information_schema.tables where table_name = tname) then
