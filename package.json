@@ -1,6 +1,6 @@
 {
   "name": "connect-request-logger-pg",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "log http requests to postgres",
   "main": "index.js",
   "dependencies": {
@@ -31,7 +31,7 @@
     "logger",
     "requests",
     "middleware"
- ],
+  ],
   "author": "Lalit Kapoor",
   "license": "MIT"
 }
