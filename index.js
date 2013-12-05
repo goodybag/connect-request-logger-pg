@@ -72,8 +72,11 @@ module.exports = function (options) {
         });
       }
       // create advisory lock
-    , function (callback) {
-        client.query('SELECT pg_advisory_lock(1);');
+    , function (sql, callback) {
+        client.query('SELECT pg_advisory_lock(1);', function(error) {
+          if (error) console.error("could not get advisory lock");
+          callback(error, sql);
+        });
       }
       // load partitioning function into database
     , function (sql, callback) {
@@ -108,7 +111,10 @@ module.exports = function (options) {
       }
       // remove advisory lock
     , function (callback) {
-        client.query('SELECT pg_advisory_unlock(1);');
+        client.query('SELECT pg_advisory_unlock(1);', function(error) {
+          if (error) console.error('could let go of advisory lock');
+          callback(error);
+        });
       }
     ];
 
